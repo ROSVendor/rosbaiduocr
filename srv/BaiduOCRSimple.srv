@@ -1,0 +1,5 @@
+string abspath
+---
+int32  error_code
+string contents
+string error_description
