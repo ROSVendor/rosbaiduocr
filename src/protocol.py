@@ -1,27 +1,81 @@
 # encoding=utf-8
 
 import urlparse
+from requests import get
+
+
+class APIURL:
+    FREE = 'http://apis.baidu.com/apistore/idlocr/ocr'
+    ENTERPRISE = 'http://apis.baidu.com/idl_baidu/baiduocrpay/idlocrpaid'
+
 
 class Configuration(object):
     def __init__(self,
                  url,
                  fromdevice='pc',
                  clientip='10.10.10.10',
-                 detecttype='LocateRecognize',
+                 detecttype='Recognize',
                  languagetype='CHN_ENG'):
-        self.fromdevice   = fromdevice
-        self.clientip     = clientip
-        self.detecttype   = detecttype
+        self.fromdevice = fromdevice
+        self.clientip = clientip
+        self.detecttype = detecttype
         self.languagetype = languagetype
-        self.imagetype    = 2
-        self.image        = Configuration.trans_img(url)
+        self.imagetype = 2
+        self.files = {'image': ('ocr.jpg', self.trans_img(url))}
 
-    def dump(self):
-        return self.__dict__
+    def config(self, apikey):
+        data = dict(self.__dict__)
+        for key in data.keys():
+            if type(key) != str:
+                del data[key]
+        header = {'apikey': apikey}
+        return header, data, self.files
 
     @staticmethod
     def trans_img(url):
         pr = urlparse.urlparse(url)
+        # TODO handle IOErrors
+        if pr.scheme == 'file':
+            return open(pr.path, 'rb')
+        elif pr.scheme in ['http', 'https']:
+            return get(url).content
+        else:
+            raise RuntimeError("url not accessible")
+
+
+class Result(object):
+    __slots__ = ['word', 'top', 'left', 'width', 'height']
+
+    def __init__(self, item):
+        self.word = item['word']
+        rect = item['rect']
+        self.height = rect['height']
+        self.width = rect['width']
+        self.top = rect['top']
+        self.left = rect['left']
+
+
+class ResultSet(object):
+    __slots__ = ['errNum', 'errMsg', 'querySign', 'retData', 'retResult']
+
+    def __init__(self, ret):
+        self.errNum = ret['errNum']
+        self.errMsg = ret['errMsg']
+        self.querySign = ret['querySign']
+        self.retData = ret['retData']
+        self.retResult = list(map(Result, ret['retData']))
+
+    @property
+    def contents(self):
+        return ''.join(map(lambda x: x.word, self.retResult))
+
+    @property
+    def content_segments(self):
+        return map(lambda x: x.word, self.retResult)
+
+    @property
+    def error_detail(self):
+        return format_error_code(self.errNum)
 
 
 err_codes = dict()
