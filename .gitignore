@@ -1,6 +1,13 @@
-# Created by https://www.gitignore.io/api/make,ros,linux,python
+# Created by https://www.gitignore.io/api/cmake,ros,linux,python
 
-#!! ERROR: make is undefined. Use list command to see defined gitignore types !!#
+### CMake ###
+CMakeCache.txt
+CMakeFiles
+CMakeScripts
+Makefile
+cmake_install.cmake
+install_manifest.txt
+
 
 ### ROS ###
 build/
@@ -122,3 +129,5 @@ docs/_build/
 # PyBuilder
 target/
 
+# gen
+src/rosbaiduocr
