@@ -1,4 +1,4 @@
-string abspath
+string url
 ---
 int32  error_code
 string contents

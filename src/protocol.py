@@ -1,7 +1,10 @@
 # encoding=utf-8
 
+from __future__ import with_statement
+
 import urlparse
-from requests import get
+from requests import get, post
+import rospy, json, sys
 
 
 class APIURL:
@@ -102,3 +105,24 @@ def format_error_code(code):
     if description is None:
         return None
     return "%d: %s" % (code, description)
+
+
+class BaiduOCRClient:
+    def __init__(self, api_key, api_url):
+        self.api_key = api_key
+        self.api_url = api_url
+
+    def recognize(self, file_url):
+        conf = Configuration(file_url)
+        headers, data, files = conf.config(self.api_key)
+        raw_response = post(self.api_url, headers=headers, data=data, files=files)
+        response = raw_response.json() if raw_response else None
+        return response
+
+    @staticmethod
+    def load(file_name):
+        with open(file_name) as fd:
+            conf = json.load(fd)
+            return BaiduOCRClient(**conf)
+        raise rospy.ServiceException('Cannot load \'%s\'' % file_name)
+
